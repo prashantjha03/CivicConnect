@@ -1,0 +1,81 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Analytics — CivicConnect{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.4rem;font-weight:800;">Analytics</h2>
+    <p style="color:var(--text3);font-size:0.88rem;">Platform statistics and trends</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <div class="card card-body">
+        <h4 style="font-weight:700;margin-bottom:1.25rem;">Challenges by Status</h4>
+        <canvas id="statusChart" height="220"></canvas>
+    </div>
+    <div class="card card-body">
+        <h4 style="font-weight:700;margin-bottom:1.25rem;">Challenges by Category</h4>
+        <canvas id="catChart" height="220"></canvas>
+    </div>
+</div>
+
+<div class="card card-body">
+    <h4 style="font-weight:700;margin-bottom:1.25rem;">Monthly Reports</h4>
+    <canvas id="monthlyChart" height="100"></canvas>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+const textColor = isDark ? '#94A3B8' : '#475569';
+Chart.defaults.color = textColor;
+
+// Status chart
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: [{% for k,v in status_data.items %}'{{ k|title }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for k,v in status_data.items %}{{ v }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: ['#2563EB','#8B5CF6','#F59E0B','#10B981','#EF4444'],
+            borderWidth: 0,
+        }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+});
+
+// Category chart
+new Chart(document.getElementById('catChart'), {
+    type: 'bar',
+    data: {
+        labels: [{% for c in cat_data %}'{{ c.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Challenges',
+            data: [{% for c in cat_data %}{{ c.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: '#2563EB',
+            borderRadius: 6,
+        }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+// Monthly chart
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+        labels: [{% for m in monthly %}'{{ m.month|date:"M Y" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Reports',
+            data: [{% for m in monthly %}{{ m.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: '#2563EB',
+            backgroundColor: 'rgba(37,99,235,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#2563EB',
+        }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+</script>
+{% endblock %}

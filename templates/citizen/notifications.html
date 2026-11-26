@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — CivicConnect{% endblock %}
+{% block content %}
+<div class="container-sm section">
+    <div class="section-header">
+        <h2><i class="fa-solid fa-bell"></i> <span>Notifications</span></h2>
+        <p>Updates on your reported challenges</p>
+    </div>
+    <div class="card" style="overflow:hidden;">
+        {% for n in notifications %}
+        <div class="notif-item {% if not n.is_read %}unread{% endif %}">
+            <div class="notif-dot" {% if n.is_read %}style="background:var(--border);"{% endif %}></div>
+            <div>
+                <div class="notif-text">
+                    {% if n.challenge %}
+                    <a href="{% url 'challenge_detail' n.challenge.pk %}" style="color:var(--text);text-decoration:none;">{{ n.message }}</a>
+                    {% else %}
+                    {{ n.message }}
+                    {% endif %}
+                </div>
+                <div class="notif-time">{{ n.created_at|date:"d M Y, H:i" }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:3rem;color:var(--text3);">
+            <i class="fa-solid fa-bell-slash" style="font-size:2rem;margin-bottom:1rem;display:block;"></i>
+            No notifications yet.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

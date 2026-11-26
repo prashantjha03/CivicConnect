@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Explore Challenges — CivicConnect{% endblock %}
+{% block content %}
+<div class="container section">
+    <div class="section-header">
+        <h2>Explore <span>Challenges</span></h2>
+        <p>Browse, search and filter all reported societal issues</p>
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" style="display:contents;">
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search challenges...">
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select name="category" class="form-control">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_cat == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select name="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sort By</label>
+                <select name="sort" class="form-control">
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="votes"  {% if sort == 'votes'  %}selected{% endif %}>Most Voted</option>
+                    <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                </select>
+            </div>
+            <div class="filter-group" style="justify-content:flex-end;">
+                <label>&nbsp;</label>
+                <div style="display:flex;gap:0.5rem;">
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i> Filter</button>
+                    <a href="{% url 'explore' %}" class="btn btn-ghost btn-sm">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-3">
+        {% for c in challenges %}
+        <a href="{% url 'challenge_detail' c.pk %}" class="card challenge-card card-hover" style="text-decoration:none;">
+            {% if c.images.first %}
+            <img src="{{ c.images.first.image.url }}" class="card-img" alt="">
+            {% else %}
+            <div class="card-img-placeholder">{{ c.category.icon|default:"📌" }}</div>
+            {% endif %}
+            <div class="card-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <div class="cat-tag">{{ c.category.name|default:"General" }}</div>
+                    <span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span>
+                </div>
+                <h3>{{ c.title }}</h3>
+                <p>{{ c.description }}</p>
+                <div class="card-footer">
+                    <span style="font-size:0.78rem;"><i class="fa-solid fa-user"></i> {{ c.author.username }}</span>
+                    <div style="display:flex;gap:0.75rem;">
+                        <span><i class="fa-solid fa-arrow-up"></i> {{ c.vote_c }}</span>
+                        <span><i class="fa-solid fa-comment"></i> {{ c.comment_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="card card-body" style="grid-column:1/-1;text-align:center;color:var(--text3);padding:3rem;">
+            <i class="fa-solid fa-magnifying-glass" style="font-size:2rem;margin-bottom:1rem;display:block;"></i>
+            No challenges found. Try adjusting your filters.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

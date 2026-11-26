@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Admin — CivicConnect{% endblock %}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="navbar-brand">
+        <i class="fa-solid fa-city"></i> Civic<span class="dot">Connect</span>
+    </a>
+    <ul class="navbar-links">
+        <li><a href="{% url 'home' %}"><i class="fa-solid fa-arrow-left"></i> Public Site</a></li>
+    </ul>
+    <div class="navbar-right">
+        <span style="font-size:0.85rem;color:var(--text3);"><i class="fa-solid fa-shield-halved" style="color:var(--primary);"></i> {{ user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Logout</a>
+        <button class="theme-btn" id="themeBtn"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+    </div>
+</nav>
+
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">Overview</div>
+            <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-gauge"></i> Dashboard
+            </a>
+            <a href="{% url 'admin_analytics' %}" class="{% if request.resolver_match.url_name == 'admin_analytics' %}active{% endif %}">
+                <i class="fa-solid fa-chart-bar"></i> Analytics
+            </a>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Management</div>
+            <a href="{% url 'admin_challenges' %}" class="{% if 'challenge' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fa-solid fa-flag"></i> Challenges
+            </a>
+            <a href="{% url 'admin_users' %}" class="{% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                <i class="fa-solid fa-users"></i> Users
+            </a>
+            <a href="/admin/" target="_blank">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Django Admin
+            </a>
+        </div>
+    </aside>
+
+    <div class="admin-content">
+        {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{% if msg.tags == 'error' %}error{% else %}success{% endif %}" style="margin-bottom:1rem;">
+            <i class="fa-solid fa-circle-check"></i> {{ msg }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script>
+(function(){
+    const t = localStorage.getItem('cc-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeIcon').className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+})();
+document.getElementById('themeBtn').addEventListener('click', function(){
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cc-theme', next);
+    document.getElementById('themeIcon').className = next === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

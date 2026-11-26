@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — CivicConnect{% endblock %}
+{% block content %}
+<div class="container section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h2 style="font-size:1.5rem;font-weight:800;">Welcome, {{ user.first_name|default:user.username }} <i class="fa-solid fa-hand-wave" style="color:var(--accent);"></i></h2>
+            <p style="color:var(--text3);font-size:0.9rem;">Here's your civic activity overview</p>
+        </div>
+        <a href="{% url 'submit_challenge' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Report New Issue</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-4" style="margin-bottom:2rem;">
+        <div class="card stat-card blue">
+            <div class="stat-icon"><i class="fa-solid fa-flag"></i></div>
+            <div class="stat-num">{{ stats.total }}</div>
+            <div class="stat-label">Total Reports</div>
+        </div>
+        <div class="card stat-card green">
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="stat-num">{{ stats.resolved }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+        <div class="card stat-card amber">
+            <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-num">{{ stats.open }}</div>
+            <div class="stat-label">Open</div>
+        </div>
+        <div class="card stat-card purple">
+            <div class="stat-icon"><i class="fa-solid fa-arrow-up"></i></div>
+            <div class="stat-num">{{ stats.votes_received }}</div>
+            <div class="stat-label">Upvotes Received</div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start;">
+        <!-- My challenges -->
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="font-weight:700;"><i class="fa-solid fa-list-check"></i> My Challenges</h3>
+                <a href="{% url 'my_challenges' %}" class="btn btn-ghost btn-sm">View All</a>
+            </div>
+            {% if my_challenges %}
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Votes</th><th>Date</th></tr></thead>
+                    <tbody>
+                    {% for c in my_challenges %}
+                    <tr>
+                        <td><a href="{% url 'challenge_detail' c.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.title|truncatechars:40 }}</a></td>
+                        <td style="color:var(--text3);">{{ c.category.icon|default:"" }} {{ c.category.name|default:"—" }}</td>
+                        <td><span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+                        <td><i class="fa-solid fa-arrow-up" style="color:var(--primary);"></i> {{ c.vote_c }}</td>
+                        <td style="color:var(--text3);">{{ c.created_at|date:"d M Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card card-body" style="text-align:center;color:var(--text3);padding:2.5rem;">
+                <i class="fa-solid fa-flag" style="font-size:2rem;margin-bottom:1rem;display:block;"></i>
+                You haven't reported any issues yet.<br>
+                <a href="{% url 'submit_challenge' %}" style="color:var(--primary);font-weight:600;">Report your first issue</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <div class="card card-body" style="margin-bottom:1.25rem;">
+                <h4 style="font-weight:700;margin-bottom:1rem;"><i class="fa-solid fa-arrow-up"></i> My Recent Votes</h4>
+                {% if my_votes %}
+                {% for v in my_votes %}
+                <div style="padding:0.6rem 0;border-bottom:1px solid var(--border);font-size:0.85rem;">
+                    <a href="{% url 'challenge_detail' v.challenge.pk %}" style="color:var(--text);text-decoration:none;font-weight:500;">{{ v.challenge.title|truncatechars:45 }}</a>
+                    <div style="font-size:0.75rem;color:var(--text3);margin-top:0.15rem;">{{ v.created_at|date:"d M Y" }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="color:var(--text3);font-size:0.85rem;">You haven't voted on any challenges yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="card card-body">
+                <h4 style="font-weight:700;margin-bottom:1rem;"><i class="fa-solid fa-bell"></i> Notifications</h4>
+                {% if unread_count > 0 %}
+                <div class="alert alert-info" style="margin-bottom:0.75rem;">
+                    <i class="fa-solid fa-bell"></i> You have {{ unread_count }} unread notification{{ unread_count|pluralize }}.
+                </div>
+                {% endif %}
+                <a href="{% url 'notifications' %}" class="btn btn-ghost btn-sm btn-block">View All Notifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

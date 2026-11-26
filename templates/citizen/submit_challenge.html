@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Report an Issue — CivicConnect{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+{% block content %}
+<div class="container-sm section">
+    <div class="section-header">
+        <h2><i class="fa-solid fa-flag"></i> Report an <span>Issue</span></h2>
+        <p>Describe the societal challenge you've observed</p>
+    </div>
+    <div class="card card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Title <span style="color:var(--red);">*</span></label>
+                <input type="text" name="title" class="form-control" required placeholder="Brief title of the issue">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" class="form-control">
+                    <option value="">Select a category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description <span style="color:var(--red);">*</span></label>
+                <textarea name="description" class="form-control" required placeholder="Describe the problem in detail — what, where, how severe..." rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-location-dot"></i> Location Name</label>
+                <input type="text" name="location_name" class="form-control" placeholder="e.g. MG Road Bengaluru, Sector 14 Gurugram, Dharavi Mumbai" id="location-name">
+                <div class="form-hint">Enter area, street or landmark in your city</div>
+            </div>
+            <div class="form-group">
+                <label>State / UT</label>
+                <select name="state" class="form-control">
+                    <option value="">Select your State / UT</option>
+                    <option>Andhra Pradesh</option><option>Arunachal Pradesh</option>
+                    <option>Assam</option><option>Bihar</option><option>Chhattisgarh</option>
+                    <option>Goa</option><option>Gujarat</option><option>Haryana</option>
+                    <option>Himachal Pradesh</option><option>Jharkhand</option>
+                    <option>Karnataka</option><option>Kerala</option>
+                    <option>Madhya Pradesh</option><option>Maharashtra</option>
+                    <option>Manipur</option><option>Meghalaya</option><option>Mizoram</option>
+                    <option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+                    <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+                    <option>Telangana</option><option>Tripura</option>
+                    <option>Uttar Pradesh</option><option>Uttarakhand</option>
+                    <option>West Bengal</option>
+                    <option>Andaman & Nicobar Islands</option>
+                    <option>Chandigarh</option><option>Dadra & Nagar Haveli</option>
+                    <option>Delhi (NCT)</option><option>Jammu & Kashmir</option>
+                    <option>Ladakh</option><option>Lakshadweep</option><option>Puducherry</option>
+                </select>
+            </div>
+            <input type="hidden" name="latitude" id="lat-input">
+            <input type="hidden" name="longitude" id="lng-input">
+
+            <div style="margin-bottom:1.2rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+                    <label style="font-size:0.85rem;font-weight:600;color:var(--text2);margin:0;">
+                        <i class="fa-solid fa-map-pin"></i> Pin on Map <span style="font-weight:400;color:var(--text3);">(optional)</span>
+                    </label>
+                    <button type="button" id="mapExpandBtn" onclick="toggleMapFullscreen()" class="btn btn-ghost btn-sm">
+                        <i class="fa-solid fa-expand" id="mapExpandIcon"></i> Fullscreen
+                    </button>
+                </div>
+                <div id="map-container" style="position:relative;">
+                    <div id="submit-map" style="height:280px;border-radius:10px;border:1.5px solid var(--input-border);"></div>
+                </div>
+            </div>
+
+            <!-- Fullscreen overlay -->
+            <div id="map-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--navy);border-bottom:2px solid var(--gold);">
+                    <span style="color:#F5ECD8;font-weight:600;font-size:0.9rem;"><i class="fa-solid fa-map-pin"></i> Click anywhere on the map to pin your issue location</span>
+                    <button type="button" onclick="toggleMapFullscreen()" class="btn btn-ghost btn-sm">
+                        <i class="fa-solid fa-compress"></i> Exit Fullscreen
+                    </button>
+                </div>
+                <div id="submit-map-fs" style="flex:1;"></div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fa-solid fa-images"></i> Upload Images <span style="font-weight:400;color:var(--text3);">(optional, multiple allowed)</span></label>
+                <input type="file" name="images" class="form-control" multiple accept="image/*" id="img-input">
+                <div class="img-preview-wrap" id="img-preview"></div>
+            </div>
+
+            <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const tileUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+const tileOpts = { attribution: 'Map &copy; OpenTopoMap', subdomains: ['a','b','c'], maxZoom: 17 };
+const mapOpts = { center: [22.5937, 82.9629], zoom: 5, minZoom: 4, maxZoom: 17 };
+
+// Small map
+const map = L.map('submit-map', mapOpts);
+L.tileLayer(tileUrl, tileOpts).addTo(map);
+let marker = null;
+
+// Fullscreen map
+let fsMap = null;
+let fsMarker = null;
+
+function setCoords(lat, lng) {
+    document.getElementById('lat-input').value = lat.toFixed(6);
+    document.getElementById('lng-input').value = lng.toFixed(6);
+    if (!document.getElementById('location-name').value)
+        document.getElementById('location-name').value = lat.toFixed(4) + ', ' + lng.toFixed(4);
+}
+
+map.on('click', function(e) {
+    const {lat, lng} = e.latlng;
+    setCoords(lat, lng);
+    if (marker) marker.setLatLng(e.latlng);
+    else marker = L.marker(e.latlng).addTo(map);
+    if (fsMap && fsMarker) fsMarker.setLatLng(e.latlng);
+    else if (fsMap) fsMarker = L.marker(e.latlng).addTo(fsMap);
+});
+
+function toggleMapFullscreen() {
+    const overlay = document.getElementById('map-overlay');
+    const icon = document.getElementById('mapExpandIcon');
+    const isOpen = overlay.style.display === 'flex';
+    if (isOpen) {
+        overlay.style.display = 'none';
+        icon.className = 'fa-solid fa-expand';
+    } else {
+        overlay.style.display = 'flex';
+        icon.className = 'fa-solid fa-compress';
+        if (!fsMap) {
+            fsMap = L.map('submit-map-fs', mapOpts);
+            L.tileLayer(tileUrl, tileOpts).addTo(fsMap);
+            fsMap.on('click', function(e) {
+                const {lat, lng} = e.latlng;
+                setCoords(lat, lng);
+                if (fsMarker) fsMarker.setLatLng(e.latlng);
+                else fsMarker = L.marker(e.latlng).addTo(fsMap);
+                if (marker) marker.setLatLng(e.latlng);
+                else marker = L.marker(e.latlng).addTo(map);
+            });
+        }
+        // Sync existing pin
+        const lat = document.getElementById('lat-input').value;
+        const lng = document.getElementById('lng-input').value;
+        if (lat && lng) {
+            const ll = [parseFloat(lat), parseFloat(lng)];
+            if (fsMarker) fsMarker.setLatLng(ll);
+            else fsMarker = L.marker(ll).addTo(fsMap);
+            fsMap.setView(ll, 13);
+        }
+        setTimeout(() => fsMap.invalidateSize(), 100);
+    }
+}
+
+document.getElementById('img-input').addEventListener('change', function() {
+    const wrap = document.getElementById('img-preview');
+    wrap.innerHTML = '';
+    Array.from(this.files).forEach(f => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-preview';
+            wrap.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+    });
+});
+</script>
+{% endblock %}

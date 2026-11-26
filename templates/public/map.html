@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}India Issue Map — CivicConnect{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+#map { height: 580px; border-radius: 12px; border: 1px solid var(--border); }
+.legend { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.82rem; line-height: 2; }
+.legend-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container section">
+    <div class="section-header">
+        <h2><i class="fa-solid fa-map-location-dot"></i> India Issue <span>Map</span></h2>
+        <p>Civic challenges reported across India — click any marker to view details</p>
+    </div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;">
+        <div class="legend" style="display:flex;gap:1.25rem;flex-wrap:wrap;">
+            <span><span class="legend-dot" style="background:#2563EB;"></span>Open</span>
+            <span><span class="legend-dot" style="background:#8B5CF6;"></span>Verified</span>
+            <span><span class="legend-dot" style="background:#F59E0B;"></span>In Progress</span>
+            <span><span class="legend-dot" style="background:#10B981;"></span>Resolved</span>
+            <span><span class="legend-dot" style="background:#EF4444;"></span>Rejected</span>
+        </div>
+    </div>
+    <div id="map"></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const indiaBounds = L.latLngBounds(L.latLng(6.5, 68.0), L.latLng(37.5, 97.5));
+const map = L.map('map', {
+    center: [22.5937, 82.9629],
+    zoom: 5,
+    minZoom: 4,
+    maxZoom: 17,
+    maxBounds: indiaBounds,
+    maxBoundsViscosity: 0.85
+});
+
+L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map &copy; <a href="https://opentopomap.org">OpenTopoMap</a> | Data &copy; OpenStreetMap contributors',
+    subdomains: ['a','b','c'],
+    maxZoom: 17
+}).addTo(map);
+
+const statusColors = { open:'#2563EB', verified:'#8B5CF6', in_progress:'#F59E0B', resolved:'#10B981', rejected:'#EF4444' };
+const statusLabels = { open:'Open', verified:'Verified', in_progress:'In Progress', resolved:'Resolved', rejected:'Rejected' };
+
+const challenges = {{ challenges_json|safe }};
+challenges.forEach(c => {
+    const color = statusColors[c.status] || '#64748B';
+    L.circleMarker([c.lat, c.lng], {
+        radius: 11, fillColor: color, color: '#fff', weight: 2.5, fillOpacity: 0.9
+    }).addTo(map).bindPopup(`
+        <div style="min-width:200px;font-family:Inter,sans-serif;">
+            <div style="font-size:1.1rem;margin-bottom:4px;">${c.icon}</div>
+            <strong style="font-size:0.92rem;display:block;margin-bottom:4px;">${c.title}</strong>
+            <span style="font-size:0.78rem;color:#64748B;display:block;margin-bottom:6px;">${c.category}</span>
+            <span style="font-size:0.75rem;background:${color};color:#fff;padding:2px 8px;border-radius:20px;font-weight:600;">${statusLabels[c.status]||c.status}</span>
+            <br><br>
+            <a href="/challenge/${c.id}/" style="font-size:0.82rem;color:#2563EB;font-weight:600;">View Details &rarr;</a>
+        </div>`, { maxWidth: 240 });
+});
+</script>
+{% endblock %}

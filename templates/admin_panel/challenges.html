@@ -1,0 +1,66 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Manage Challenges — CivicConnect{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h2 style="font-size:1.4rem;font-weight:800;">Manage Challenges</h2>
+        <p style="color:var(--text3);font-size:0.88rem;">Verify, assign and update challenge statuses</p>
+    </div>
+</div>
+
+<div class="filter-bar" style="margin-bottom:1.5rem;">
+    <form method="get" style="display:contents;">
+        <div class="filter-group">
+            <label>Search</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Title or author...">
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select name="status" class="form-control">
+                <option value="">All</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Category</label>
+            <select name="category" class="form-control">
+                <option value="">All</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if cat_filter == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group" style="justify-content:flex-end;">
+            <label>&nbsp;</label>
+            <div style="display:flex;gap:0.5rem;">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i> Filter</button>
+                <a href="{% url 'admin_challenges' %}" class="btn btn-ghost btn-sm">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Status</th><th>Verified</th><th>Votes</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for c in challenges %}
+        <tr>
+            <td><a href="{% url 'challenge_detail' c.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.title|truncatechars:40 }}</a></td>
+            <td style="color:var(--text3);">{{ c.author.username }}</td>
+            <td>{{ c.category.icon|default:"" }} {{ c.category.name|default:"—" }}</td>
+            <td><span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+            <td>{% if c.is_verified %}<i class="fa-solid fa-circle-check" style="color:var(--green);"></i>{% else %}<i class="fa-solid fa-circle-xmark" style="color:var(--text3);"></i>{% endif %}</td>
+            <td><i class="fa-solid fa-arrow-up" style="color:var(--primary);"></i> {{ c.vote_c }}</td>
+            <td style="color:var(--text3);">{{ c.created_at|date:"d M Y" }}</td>
+            <td><a href="{% url 'admin_update_challenge' c.pk %}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Update</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text3);">No challenges found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

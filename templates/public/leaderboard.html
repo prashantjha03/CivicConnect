@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard — CivicConnect{% endblock %}
+{% block content %}
+<div class="container section">
+    <div class="section-header">
+        <h2><i class="fa-solid fa-trophy"></i> Community <span>Leaderboard</span></h2>
+        <p>Top contributors driving change in their communities</p>
+    </div>
+    <div class="card" style="overflow:hidden;">
+        {% for u in top_users %}
+        <div class="lb-row">
+            <div class="lb-rank {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
+                {{ forloop.counter }}
+            </div>
+            <img src="https://ui-avatars.com/api/?name={{ u.username }}&background=2563EB&color=fff&size=40" style="border-radius:50%;width:40px;height:40px;" alt="">
+            <div class="lb-info">
+                <div class="lb-name">{{ u.get_full_name|default:u.username }}</div>
+                <div class="lb-meta">{{ u.challenge_count }} report{{ u.challenge_count|pluralize }} &middot; {{ u.vote_count }} upvotes received</div>
+            </div>
+            <div class="lb-score">{{ u.vote_count }}</div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:3rem;color:var(--text3);">No contributors yet.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

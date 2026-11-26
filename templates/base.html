@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}CivicConnect{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="navbar-brand">
+        <i class="fa-solid fa-city"></i> Civic<span class="dot">Connect</span>
+    </a>
+    <ul class="navbar-links">
+        <li><a href="{% url 'home' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="{% url 'explore' %}"><i class="fa-solid fa-compass"></i> Explore</a></li>
+        <li><a href="{% url 'map' %}"><i class="fa-solid fa-map-location-dot"></i> Map</a></li>
+        <li><a href="{% url 'leaderboard' %}"><i class="fa-solid fa-trophy"></i> Leaderboard</a></li>
+        {% if user.is_staff %}
+        <li><a href="{% url 'admin_dashboard' %}"><i class="fa-solid fa-gauge"></i> Admin Panel</a></li>
+        {% endif %}
+    </ul>
+    <div class="navbar-right">
+        {% if user.is_authenticated %}
+        {% with unread=user.notifications.filter %}
+        <a href="{% url 'notifications' %}" class="notif-btn" title="Notifications">
+            <i class="fa-solid fa-bell"></i>
+            {% with count=user.notifications.all|length %}
+            {% endwith %}
+        </a>
+        {% endwith %}
+        <a href="{% url 'submit_challenge' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Report Issue</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-user"></i> {{ user.username }}</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Login</a>
+        <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Register</a>
+        {% endif %}
+        <button class="theme-btn" id="themeBtn" title="Toggle theme"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+    </div>
+</nav>
+
+<main>
+{% if messages %}
+<div class="container" style="padding-top:1rem;">
+    {% for msg in messages %}
+    <div class="alert alert-{% if msg.tags == 'error' %}error{% else %}success{% endif %}">
+        <i class="fa-solid fa-{% if msg.tags == 'error' %}circle-exclamation{% else %}circle-check{% endif %}"></i>
+        {{ msg }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+    <strong style="color:var(--primary);">CivicConnect</strong> &mdash; A Crowdsourcing Platform for Societal Challenges &mdash; SIH Societal Challenges
+</footer>
+
+<script>
+(function(){
+    const t = localStorage.getItem('cc-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeIcon').className = t === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+})();
+document.getElementById('themeBtn').addEventListener('click', function(){
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('cc-theme', next);
+    document.getElementById('themeIcon').className = next === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

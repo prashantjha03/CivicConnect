@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Login — CivicConnect{% endblock %}
+{% block content %}
+<div class="form-wrap">
+    <div class="form-card">
+        <div class="card card-body">
+            <div style="text-align:center;margin-bottom:2rem;">
+                <div style="font-size:2.5rem;margin-bottom:0.5rem;"><i class="fa-solid fa-city" style="color:var(--primary);"></i></div>
+                <h2 style="font-size:1.5rem;font-weight:800;">Welcome Back</h2>
+                <p style="color:var(--text3);font-size:0.88rem;margin-top:0.3rem;">Login to report and track issues</p>
+            </div>
+            {% for msg in messages %}<div class="alert alert-error"><i class="fa-solid fa-circle-exclamation"></i> {{ msg }}</div>{% endfor %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control" required placeholder="Enter your username" autofocus>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position:relative;">
+                        <input type="password" name="password" id="loginPass" class="form-control" required placeholder="Enter your password" style="padding-right:2.75rem;">
+                        <button type="button" onclick="togglePass('loginPass','loginPassIcon')" style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;padding:0;">
+                            <i id="loginPassIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top:0.5rem;">Login</button>
+            </form>
+            <p style="text-align:center;margin-top:1.25rem;font-size:0.88rem;color:var(--text3);">
+                New to CivicConnect? <a href="{% url 'register' %}" style="color:var(--primary);font-weight:600;">Create account</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePass(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+</script>
+{% endblock %}

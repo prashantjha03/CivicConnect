@@ -1,0 +1,80 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Update Challenge — CivicConnect{% endblock %}
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'admin_challenges' %}" style="color:var(--text3);text-decoration:none;font-size:0.85rem;"><i class="fa-solid fa-arrow-left"></i> Back to Challenges</a>
+</div>
+<div style="max-width:640px;">
+    <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:0.3rem;">Update Challenge</h2>
+    <p style="color:var(--text3);font-size:0.88rem;margin-bottom:1.5rem;">{{ challenge.title }}</p>
+
+    <div class="card card-body" style="margin-bottom:1.5rem;">
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+            <span class="badge badge-{{ challenge.status }}">{{ challenge.get_status_display }}</span>
+            {% if challenge.is_verified %}<span class="badge" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-circle-check"></i> Verified</span>{% endif %}
+        </div>
+        <p style="font-size:0.9rem;color:var(--text2);">{{ challenge.description|truncatechars:200 }}</p>
+        <div style="font-size:0.82rem;color:var(--text3);margin-top:0.75rem;">
+            By {{ challenge.author.username }} &middot; {{ challenge.created_at|date:"d M Y" }}
+            {% if challenge.location_name %} &middot; <i class="fa-solid fa-location-dot"></i> {{ challenge.location_name }}{% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Update Status</label>
+                <select name="status" class="form-control">
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if challenge.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assign to Department</label>
+                <select name="department" class="form-control">
+                    <option value="">Not assigned</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if challenge.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" name="is_verified" {% if challenge.is_verified %}checked{% endif %} style="width:16px;height:16px;accent-color:var(--green);">
+                    Mark as Verified
+                </label>
+            </div>
+            <div class="form-group">
+                <label>Admin Note <span style="font-weight:400;color:var(--text3);">(shown in timeline)</span></label>
+                <textarea name="note" class="form-control" rows="3" placeholder="Add a note about this status change..."></textarea>
+            </div>
+            <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                <a href="{% url 'admin_challenges' %}" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card card-body" style="margin-top:1.5rem;">
+        <h4 style="font-weight:700;margin-bottom:1rem;"><i class="fa-solid fa-clock-rotate-left"></i> Status History</h4>
+        {% if challenge.history.all %}
+        <div class="timeline">
+            {% for h in challenge.history.all %}
+            <div class="timeline-item">
+                <div class="tl-date">{{ h.changed_at|date:"d M Y, H:i" }}</div>
+                <div class="tl-text">
+                    <span class="badge badge-{{ h.new_status }}">{{ h.new_status|title }}</span>
+                    {% if h.changed_by %}by {{ h.changed_by.username }}{% endif %}
+                </div>
+                {% if h.note %}<div class="tl-note">"{{ h.note }}"</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text3);font-size:0.85rem;">No history yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

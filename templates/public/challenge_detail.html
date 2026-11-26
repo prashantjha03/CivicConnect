@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}{{ challenge.title }} — CivicConnect{% endblock %}
+{% block content %}
+<div class="container section">
+    <div style="margin-bottom:1.5rem;">
+        <a href="{% url 'explore' %}" style="color:var(--text3);text-decoration:none;font-size:0.85rem;"><i class="fa-solid fa-arrow-left"></i> Back to Explore</a>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:2rem;align-items:start;">
+        <!-- Main -->
+        <div>
+            <div class="card card-body" style="margin-bottom:1.5rem;">
+                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+                    <span class="badge badge-{{ challenge.status }}">{{ challenge.get_status_display }}</span>
+                    {% if challenge.is_verified %}<span class="badge" style="background:rgba(16,185,129,0.1);color:#059669;"><i class="fa-solid fa-circle-check"></i> Verified</span>{% endif %}
+                    {% if challenge.category %}<span style="font-size:0.82rem;color:var(--text3);">{{ challenge.category.icon }} {{ challenge.category.name }}</span>{% endif %}
+                </div>
+                <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:1rem;line-height:1.3;">{{ challenge.title }}</h1>
+                <p style="color:var(--text2);line-height:1.8;margin-bottom:1.5rem;">{{ challenge.description }}</p>
+
+                {% if challenge.location_name %}
+                <div style="display:flex;align-items:center;gap:0.5rem;color:var(--text3);font-size:0.88rem;margin-bottom:1rem;">
+                    <i class="fa-solid fa-location-dot" style="color:var(--red);"></i> {{ challenge.location_name }}
+                </div>
+                {% endif %}
+
+                {% if images %}
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
+                    {% for img in images %}
+                    <img src="{{ img.image.url }}" style="width:100%;height:180px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" alt="{{ img.caption }}">
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div style="display:flex;align-items:center;gap:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+                    <img src="https://ui-avatars.com/api/?name={{ challenge.author.username }}&background=2563EB&color=fff&size=36" style="border-radius:50%;width:36px;height:36px;" alt="">
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem;">{{ challenge.author.get_full_name|default:challenge.author.username }}</div>
+                        <div style="font-size:0.78rem;color:var(--text3);">Reported {{ challenge.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <div style="margin-left:auto;display:flex;gap:0.75rem;align-items:center;">
+                        <span style="font-size:0.85rem;color:var(--text3);"><i class="fa-solid fa-comment"></i> {{ comments.count }} comments</span>
+                        <a href="{% url 'vote' challenge.pk %}" class="vote-btn {% if user_voted %}voted{% endif %}" id="vote-btn" data-pk="{{ challenge.pk }}">
+                            <i class="fa-solid fa-arrow-up"></i>
+                            <span id="vote-count">{{ challenge.vote_count }}</span> Upvotes
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments -->
+            <div class="card card-body" style="margin-bottom:1.5rem;">
+                <h3 style="font-weight:700;margin-bottom:1.25rem;"><i class="fa-solid fa-comments"></i> Discussion ({{ comments.count }})</h3>
+                {% for comment in comments %}
+                <div style="display:flex;gap:0.75rem;margin-bottom:1.25rem;">
+                    <img src="https://ui-avatars.com/api/?name={{ comment.author.username }}&background=475569&color=fff&size=32" style="border-radius:50%;width:32px;height:32px;flex-shrink:0;" alt="">
+                    <div style="flex:1;">
+                        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.3rem;">
+                            <span style="font-weight:600;font-size:0.88rem;">{{ comment.author.username }}</span>
+                            <span style="font-size:0.75rem;color:var(--text3);">{{ comment.created_at|date:"d M Y, H:i" }}</span>
+                        </div>
+                        <p style="font-size:0.9rem;color:var(--text2);">{{ comment.text }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color:var(--text3);font-size:0.88rem;">No comments yet. Be the first to discuss!</p>
+                {% endfor %}
+
+                {% if user.is_authenticated %}
+                <form method="post" style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+                    {% csrf_token %}
+                    <textarea name="comment" class="form-control" placeholder="Share your thoughts or suggest a solution..." rows="3" style="margin-bottom:0.75rem;"></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
+                </form>
+                {% else %}
+                <p style="margin-top:1rem;font-size:0.85rem;color:var(--text3);border-top:1px solid var(--border);padding-top:1rem;">
+                    <a href="{% url 'login' %}" style="color:var(--primary);">Login</a> to join the discussion.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Status timeline -->
+            <div class="card card-body" style="margin-bottom:1.25rem;">
+                <h4 style="font-weight:700;margin-bottom:1.25rem;"><i class="fa-solid fa-clock-rotate-left"></i> Progress Timeline</h4>
+                {% if history %}
+                <div class="timeline">
+                    {% for h in history %}
+                    <div class="timeline-item">
+                        <div class="tl-date">{{ h.changed_at|date:"d M Y, H:i" }}</div>
+                        <div class="tl-text">
+                            Status changed to <span class="badge badge-{{ h.new_status }}">{{ h.new_status|title }}</span>
+                            {% if h.changed_by %}by {{ h.changed_by.username }}{% endif %}
+                        </div>
+                        {% if h.note %}<div class="tl-note">"{{ h.note }}"</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:var(--text3);font-size:0.85rem;">No status updates yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Details -->
+            <div class="card card-body" style="margin-bottom:1.25rem;">
+                <h4 style="font-weight:700;margin-bottom:1rem;"><i class="fa-solid fa-circle-info"></i> Details</h4>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.88rem;">
+                    {% if challenge.department %}
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:var(--text3);">Assigned to</span>
+                        <span style="font-weight:600;">{{ challenge.department.name }}</span>
+                    </div>
+                    {% endif %}
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:var(--text3);">Reported</span>
+                        <span>{{ challenge.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:var(--text3);">Last updated</span>
+                        <span>{{ challenge.updated_at|date:"d M Y" }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:var(--text3);">Upvotes</span>
+                        <span style="font-weight:700;color:var(--primary);">{{ challenge.vote_count }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if challenge.latitude and challenge.longitude %}
+            <div class="card" style="overflow:hidden;">
+                <div id="detail-map" style="height:200px;"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_head %}
+{% if challenge.latitude and challenge.longitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('vote-btn').addEventListener('click', function(e){
+    e.preventDefault();
+    const btn = this;
+    fetch("{% url 'vote' challenge.pk %}", {
+        method: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(r => r.json()).then(data => {
+        document.getElementById('vote-count').textContent = data.count;
+        btn.classList.toggle('voted', data.voted);
+    });
+});
+</script>
+{% if challenge.latitude and challenge.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('detail-map').setView([{{ challenge.latitude }}, {{ challenge.longitude }}], 14);
+L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: 'Map &copy; OpenTopoMap | Data &copy; OpenStreetMap contributors',
+    subdomains: ['a','b','c'], maxZoom: 17
+}).addTo(map);
+L.marker([{{ challenge.latitude }}, {{ challenge.longitude }}]).addTo(map).bindPopup('{{ challenge.title|escapejs }}').openPopup();
+</script>
+{% endif %}
+{% endblock %}

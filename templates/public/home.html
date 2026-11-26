@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}CivicConnect — Nagarik Awaaz, Badlaav Ki Shuruaat{% endblock %}
+{% block content %}
+
+<div class="hero">
+    <div class="hero-content">
+        <div class="hero-badge"><i class="fa-solid fa-satellite-dish"></i> 🇮🇳 Nagarik Shakti — Crowdsourcing Societal Challenges Across India</div>
+        <h1>Apni Awaaz.<br><span>Apna Badlaav.</span></h1>
+        <p>CivicConnect empowers Indian citizens to report local problems — from broken roads in Mumbai to water shortages in Rajasthan — and track their resolution transparently.</p>
+        <div class="hero-btns">
+            <a href="{% url 'submit_challenge' %}" class="btn btn-primary btn-lg"><i class="fa-solid fa-plus"></i> Report an Issue</a>
+            <a href="{% url 'explore' %}" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.3);"><i class="fa-solid fa-compass"></i> Explore Challenges</a>
+            <a href="{% url 'map' %}" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.3);"><i class="fa-solid fa-map-location-dot"></i> View India Map</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="num">{{ stats.total }}</div><div class="lbl">Total Reports</div></div>
+            <div class="hero-stat"><div class="num">{{ stats.resolved }}</div><div class="lbl">Resolved</div></div>
+            <div class="hero-stat"><div class="num">{{ stats.in_progress }}</div><div class="lbl">In Progress</div></div>
+            <div class="hero-stat"><div class="num">{{ stats.open }}</div><div class="lbl">Open Issues</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- How it works -->
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:2.5rem 0;">
+    <div class="container">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;text-align:center;">
+            <div>
+                <div style="font-size:2rem;margin-bottom:0.5rem;">📍</div>
+                <div style="font-weight:700;margin-bottom:0.3rem;">Report</div>
+                <div style="font-size:0.85rem;color:var(--text3);">Submit an issue with location, photos and description</div>
+            </div>
+            <div>
+                <div style="font-size:2rem;margin-bottom:0.5rem;">👍</div>
+                <div style="font-weight:700;margin-bottom:0.3rem;">Vote</div>
+                <div style="font-size:0.85rem;color:var(--text3);">Community upvotes prioritize the most critical issues</div>
+            </div>
+            <div>
+                <div style="font-size:2rem;margin-bottom:0.5rem;">✅</div>
+                <div style="font-weight:700;margin-bottom:0.3rem;">Verify</div>
+                <div style="font-size:0.85rem;color:var(--text3);">Admin team verifies and assigns to the right department</div>
+            </div>
+            <div>
+                <div style="font-size:2rem;margin-bottom:0.5rem;">🔧</div>
+                <div style="font-weight:700;margin-bottom:0.3rem;">Resolve</div>
+                <div style="font-size:0.85rem;color:var(--text3);">Track progress from open to fully resolved</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container section">
+    <!-- Categories -->
+    <div class="section-header">
+        <h2>Browse by <span>Category</span></h2>
+        <p>Report issues across all civic domains in India</p>
+    </div>
+    <div class="grid grid-4" style="margin-bottom:3rem;">
+        {% for cat in categories %}
+        <a href="{% url 'explore' %}?category={{ cat.id }}" class="card card-body card-hover" style="text-align:center;text-decoration:none;color:var(--text);">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">{{ cat.icon }}</div>
+            <div style="font-weight:700;font-size:0.9rem;">{{ cat.name }}</div>
+            <div style="font-size:0.78rem;color:var(--text3);margin-top:0.2rem;">{{ cat.count }} challenge{{ cat.count|pluralize }}</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Recent challenges -->
+    <div class="section-header">
+        <h2>Recent <span>Challenges</span></h2>
+        <p>Latest issues reported by citizens across India</p>
+    </div>
+    <div class="grid grid-3">
+        {% for c in recent %}
+        <a href="{% url 'challenge_detail' c.pk %}" class="card challenge-card card-hover" style="text-decoration:none;">
+            {% if c.images.first %}
+            <img src="{{ c.images.first.image.url }}" class="card-img" alt="">
+            {% else %}
+            <div class="card-img-placeholder">{{ c.category.icon|default:"📌" }}</div>
+            {% endif %}
+            <div class="card-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+                    <div class="cat-tag">{{ c.category.name|default:"General" }}</div>
+                    <span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span>
+                </div>
+                <h3>{{ c.title }}</h3>
+                <p>{{ c.description }}</p>
+                <div class="card-footer">
+                    <span><i class="fa-solid fa-location-dot" style="color:var(--red);"></i> {{ c.location_name|default:"India"|truncatechars:28 }}</span>
+                    <span><i class="fa-solid fa-arrow-up" style="color:var(--primary);"></i> {{ c.vote_count }}</span>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="card card-body" style="grid-column:1/-1;text-align:center;color:var(--text3);padding:3rem;">
+            No challenges yet. <a href="{% url 'submit_challenge' %}" style="color:var(--primary);font-weight:600;">Be the first to report one!</a>
+        </div>
+        {% endfor %}
+    </div>
+    <div style="text-align:center;margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="{% url 'explore' %}" class="btn btn-outline">View All Challenges <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="{% url 'map' %}" class="btn btn-ghost"><i class="fa-solid fa-map-location-dot"></i> View on India Map</a>
+    </div>
+</div>
+{% endblock %}

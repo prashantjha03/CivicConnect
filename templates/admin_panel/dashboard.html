@@ -1,0 +1,67 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Admin Dashboard — CivicConnect{% endblock %}
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.4rem;font-weight:800;">Admin Dashboard</h2>
+    <p style="color:var(--text3);font-size:0.88rem;">Platform overview and quick actions</p>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:2rem;">
+    <div class="card stat-card blue"><div class="stat-icon"><i class="fa-solid fa-flag"></i></div><div class="stat-num">{{ stats.total }}</div><div class="stat-label">Total Reports</div></div>
+    <div class="card stat-card amber"><div class="stat-icon"><i class="fa-solid fa-hourglass"></i></div><div class="stat-num">{{ stats.open }}</div><div class="stat-label">Open</div></div>
+    <div class="card stat-card purple"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><div class="stat-num">{{ stats.verified }}</div><div class="stat-label">Verified</div></div>
+    <div class="card stat-card green"><div class="stat-icon"><i class="fa-solid fa-check-double"></i></div><div class="stat-num">{{ stats.resolved }}</div><div class="stat-label">Resolved</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start;">
+    <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 style="font-weight:700;">Recent Challenges</h3>
+            <a href="{% url 'admin_challenges' %}" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                {% for c in recent %}
+                <tr>
+                    <td><a href="{% url 'challenge_detail' c.pk %}" style="color:var(--primary);font-weight:600;text-decoration:none;">{{ c.title|truncatechars:40 }}</a></td>
+                    <td style="color:var(--text3);">{{ c.author.username }}</td>
+                    <td>{{ c.category.icon|default:"" }} {{ c.category.name|default:"—" }}</td>
+                    <td><span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+                    <td><a href="{% url 'admin_update_challenge' c.pk %}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Update</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <h3 style="font-weight:700;margin-bottom:1rem;">Challenges by Category</h3>
+        <div class="card" style="overflow:hidden;">
+            {% for cat in cat_data %}
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1.1rem;border-bottom:1px solid var(--border);">
+                <span style="font-size:0.88rem;">{{ cat.icon }} {{ cat.name }}</span>
+                <span style="font-weight:700;color:var(--primary);">{{ cat.count }}</span>
+            </div>
+            {% empty %}
+            <div style="padding:1.5rem;text-align:center;color:var(--text3);">No data yet.</div>
+            {% endfor %}
+        </div>
+        <div class="card card-body" style="margin-top:1rem;">
+            <div style="font-size:0.82rem;color:var(--text3);margin-bottom:0.75rem;">Status Breakdown</div>
+            {% for label, count in stats.items %}
+            {% if label != 'users' %}
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.4rem;">
+                <span>{{ label|title }}</span><span style="font-weight:600;">{{ count }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+            <div style="border-top:1px solid var(--border);margin-top:0.75rem;padding-top:0.75rem;display:flex;justify-content:space-between;font-size:0.85rem;">
+                <span style="color:var(--text3);">Total Users</span><span style="font-weight:700;">{{ stats.users }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
